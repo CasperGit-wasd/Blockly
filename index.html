@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blockly + Run / Stop / Reset</title>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    #blocklyDiv {
+      height: calc(100vh - 50px);
+      width: 100%;
+    }
+    #controls {
+      height: 50px;
+      background: #333;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 控制區 -->
+  <div id="controls">
+    <button onclick="runCode()">▶️ Run</button>
+    <button onclick="stopCode()">⏹️ Stop</button>
+    <button onclick="resetWorkspace()">🔁 Reset</button>
+  </div>
+
+  <!-- Blockly 區域 -->
+  <div id="blocklyDiv"></div>
+
+  <!-- Toolbox 定義 -->
+  <xml id="toolbox" style="display: none">
+    <category name="控制" colour="#5C81A6">
+      <block type="controls_if"></block>
+      <block type="controls_repeat_ext">
+        <value name="TIMES">
+          <shadow type="math_number">
+            <field name="NUM">5</field>
+          </shadow>
+        </value>
+      </block>
+    </category>
+    <category name="運算" colour="#5CA65C">
+      <block type="math_number">
+        <field name="NUM">123</field>
+      </block>
+      <block type="math_arithmetic"></block>
+    </category>
+    <category name="變數" custom="VARIABLE" colour="#A65C81"></category>
+    <category name="輸出" colour="#FFA500">
+      <block type="text_print"></block>
+    </category>
+    <category name="文字" colour="#FF6680">
+      <block type="text"></block>
+      <block type="text_join"></block>
+    </category>
+  </xml>
+
+  <script>
+    let workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox'),
+      trashcan: true,
+      zoom: {
+        controls: true,
+        wheel: true
+      },
+      grid: {
+        spacing: 20,
+        length: 3,
+        colour: '#ccc',
+        snap: true
+      }
+    });
+
+    // Blockly 預設沒有 console 輸出積木，我們用 text_print 對應到 console.log
+    Blockly.JavaScript['text_print'] = function(block) {
+      const msg = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || '\'\'';
+      return 'if (running) console.log(' + msg + ');\n';
+    };
+
+    // 控制執行用的變數
+    let running = false;
+
+    function runCode() {
+      const code = Blockly.JavaScript.workspaceToCode(workspace);
+      running = true;
+      try {
+        eval(code);
+      } catch (e) {
+        console.error('執行錯誤:', e);
+      }
+    }
+
+    function stopCode() {
+      running = false;
+      console.warn("已停止執行");
+    }
+
+    function resetWorkspace() {
+      running = false;
+      Blockly.getMainWorkspace().clear();
+    }
+  </script>
+</body>
+</html>
